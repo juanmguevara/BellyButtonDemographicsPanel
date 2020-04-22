@@ -11,6 +11,7 @@ function init() {
         .property("value", sample);
     });
 })}
+
 init();
 
 // function optionChanged(newSample) {
@@ -30,44 +31,45 @@ function buildMetadata(sample) {
     var PANEL = d3.select("#sample-metadata");
 
     PANEL.html("");
-    PANEL.append("h6").text(result.location);
+    PANEL.append("h6").text("ID: " + result.id);
+    PANEL.append("h6").text("ETHNICITY: " + result.ethnicity);
+    PANEL.append("h6").text("GENDER: " + result.gender);
+    PANEL.append("h6").text("AGE: " + result.age);
+    PANEL.append("h6").text("lOCATION: " + result.location);
+    PANEL.append("h6").text("BBTYPE: " + result.bbtype);
+    PANEL.append("h6").text("WFREQ: " + result.wfreq);
   });
 }
 
-//Bar Horizontal Bar Chart
-
 function buildCharts(sample) {
   d3.json("samples.json").then((data) => {
-    // var sample_values = data.sample_values;
-    // var resultArray = samples.filter(sampleObj => sampleObj.id == sample);
-    // var result = resultArray[0];
+    var samples = data.samples;
+    var resultArray2 = samples.filter(sampleObj => sampleObj.id == sample);
+    var result2 = resultArray2[0];
 
-    // Sort the data array using the sample value
-    data.sort(function(a,b){
-      return parseFloat(b.otu_ids) - parseFloat(a.otu_ids);
-    });
-
-    // Slice the first 10 objects for plotting
-    data = data.slice(0,10);
+    var otu_ids=result2.otu_ids;
+    var otu_labels=result2.otu_labels;
+    var sample_values=result2.sample_values;
 
     // Reverse the array due to Plotly's defaults
-    data = data.reverse();
+    console.log(sample_values);
     
     // Trace1 for the OTU Data
     var trace1 = {
-      x: data.map(row => row.otu_ids),
-      y: data.map(row => row.otu_labels),
-      text: data.map(row => row.otu_labels),
+      x: sample_values.slice(0, 10).reverse(), 
+      y: otu_ids.slice(0, 10).map(otu_id=>`OTU ${otu_id}`).reverse(),
+      text: otu_labels.slice(0, 10).reverse(),
       name: "OTU",
       type: "bar",
       orientation: "h"
     };
 
     // data
-    var data = [trace1];
+    var barData = [trace1];
 
+    //Bar Horizontal Bar Chart
     // Apply the group bar mode to the layout
-    var layout = {
+    var bar_layout = {
       title: "OTU Top 10",
       margin: {
         l: 100,
@@ -76,8 +78,32 @@ function buildCharts(sample) {
         b: 100
       }
     };
+    
+    //Bubble Chart
+    var trace2={
+      x: otu_ids,
+      y: sample_values,
+      mode: "markers",
+      marker: {
+        size: sample_values.map(d=>d/1.5),
+        color: otu_ids,
+        colorScale: "Earth"
+      }
+    };
+
+    var bubbleData=[trace2];
+
+    var bubble_layout={
+      title: 'Bacteria Culture Per Sample',
+      xaxis: {
+        title: 'OTU ID'
+      }
+    };
 
     // Render the plot to the div tag with id "plot"
-    Plotly.newPlot("bar", data, layout);
+    Plotly.newPlot("bar", barData, bar_layout);
+
+    // Render the plot to the div tag with id "bubble"
+    Plotly.newPlot("bubble", bubbleData, bubble_layout);
   });
 }
